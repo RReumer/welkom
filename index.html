@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welkom</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --ink:#ffffff;
+    --ink-soft:rgba(255,255,255,.78);
+    --ink-faint:rgba(255,255,255,.55);
+    --glass:rgba(255,255,255,.10);
+    --glass-line:rgba(255,255,255,.18);
+    --sun:#ffd27a;
+    --rain:#9fd3ff;
+    --radius:22px;
+    --font:Arial, Helvetica, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:transparent}
+  body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+
+  .stage{position:relative;height:100%;min-height:340px;border-radius:var(--radius);overflow:hidden;
+    background:linear-gradient(180deg,var(--sky-top,#0a1433) 0%,var(--sky-bottom,#1f2d5c) 100%);
+    transition:background 2s linear}
+  #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .horizon{position:absolute;left:0;right:0;bottom:0;height:45%;pointer-events:none;
+    background:radial-gradient(120% 100% at var(--sun-x,50%) 110%,var(--glow,rgba(255,180,120,0)) 0%,transparent 60%)}
+
+  .wrap{position:relative;z-index:1;height:100%;display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1.2fr);
+    gap:clamp(16px,3vw,40px);padding:clamp(20px,3.2vw,40px);align-items:center}
+
+  /* Begroeting */
+  .hello{align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+  .date{font-size:clamp(14px,1.3vw,17px);color:var(--ink-soft);font-weight:400;letter-spacing:.01em}
+  .greet{font-weight:600;
+    font-size:clamp(34px,4.6vw,64px);line-height:.98;letter-spacing:-.02em;margin-top:.35em}
+  .greet .name{display:block;font-weight:400;color:var(--ink-soft)}
+  .sunline{margin-top:18px}
+  .arc{width:100%;max-width:300px;height:auto;display:block;overflow:visible}
+  .arc .track{fill:none;stroke:var(--ink-faint);stroke-width:1.2;stroke-dasharray:2 5}
+  .arc .done{fill:none;stroke:var(--ink-soft);stroke-width:1.6;stroke-linecap:round}
+  .arc .ground{stroke:var(--ink-faint);stroke-width:1}
+  .arc .body{filter:drop-shadow(0 0 8px var(--sun))}
+  .suntimes{display:flex;justify-content:space-between;max-width:300px;font-size:13px;color:var(--ink-soft);margin-top:6px;font-variant-numeric:tabular-nums}
+
+  /* Klok */
+  .clock{text-align:center;min-width:0}
+  .time{font-weight:400;
+    font-size:clamp(64px,10vw,150px);line-height:.85;letter-spacing:-.04em;font-variant-numeric:tabular-nums;
+    display:inline-flex;align-items:flex-start;white-space:nowrap}
+  .time .colon{display:inline-block;margin:0 .02em;transform:translateY(-.06em)}
+
+  /* Weer */
+  .weather{min-width:0;display:flex;flex-direction:column;gap:14px}
+  .now{display:flex;align-items:center;gap:14px}
+  .now .wicon{width:64px;height:64px;flex:none}
+  .temp{font-weight:500;font-size:clamp(40px,4.4vw,58px);line-height:1;letter-spacing:-.03em}
+  .temp sup{font-size:.45em;font-weight:400;vertical-align:super;margin-left:2px}
+  .desc{font-size:15px;font-weight:500}
+  .meta{font-size:13px;color:var(--ink-soft);margin-top:3px}
+  .hours{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:10px 6px;
+    background:var(--glass);border:1px solid var(--glass-line);border-radius:16px;backdrop-filter:blur(8px)}
+  .hour{text-align:center;font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .hour .wicon{width:26px;height:26px;margin:4px auto 2px;display:block}
+  .hour b{display:block;color:var(--ink);font-size:14px;font-weight:500}
+  .hour .pp{display:block;font-size:11px;color:var(--rain);min-height:14px}
+  .days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .day{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .day .wicon{width:26px;height:26px;flex:none}
+  .day b{color:var(--ink);font-weight:500}
+  .wnote{font-size:13px;color:var(--ink-soft)}
+
+  .wicon{color:var(--ink)}
+  .wicon .s{color:var(--sun)}
+  .wicon .r{color:var(--rain)}
+
+  /* Inloop: één moment bij laden */
+  .wrap>*{opacity:0;transform:translateY(8px);animation:enter .9s cubic-bezier(.2,.7,.2,1) forwards}
+  .wrap>.clock{animation-delay:.12s}
+  .wrap>.weather{animation-delay:.24s}
+  @keyframes enter{to{opacity:1;transform:none}}
+
+  /* Smaller: tablet */
+  @media (max-width:980px){
+    .wrap{grid-template-columns:1fr 1fr;grid-template-rows:auto auto;align-content:center}
+    .hello{grid-column:1;grid-row:1}
+    .clock{grid-column:2;grid-row:1;text-align:right}
+    .weather{grid-column:1 / -1;grid-row:2;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:18px}
+    .days{display:none}
+    .sunline{display:none}
+    }
+  /* Telefoon */
+  @media (max-width:560px){
+    .wrap{grid-template-columns:1fr;gap:14px;padding:18px}
+    .clock{grid-column:1;grid-row:2;text-align:left}
+    .hello{grid-row:1}
+    .weather{grid-row:3;grid-template-columns:1fr}
+        .hours{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .hour:nth-child(n+5){display:none}
+  }
+  @media (max-height:300px){ .days,.sunline{display:none} }
+
+  @media (prefers-reduced-motion:reduce){
+    .wrap>*{animation:none;opacity:1;transform:none}
+    .stage{transition:none}
+  }
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="horizon" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <section class="hello">
+      <p class="date" id="date"></p>
+      <h1 class="greet"><span id="greet">Welkom</span><span class="name" id="name"></span></h1>
+      <div class="sunline">
+        <svg class="arc" viewBox="0 0 300 92" aria-hidden="true">
+          <line class="ground" x1="0" y1="86" x2="300" y2="86"/>
+          <path id="arcTrack" class="track" d="M 14 86 Q 150 -40 286 86"/>
+          <path id="arcDone" class="done" d="M 14 86 Q 150 -40 286 86"/>
+          <g id="arcBody" class="body"></g>
+        </svg>
+        <div class="suntimes"><span id="rise"></span><span id="set"></span></div>
+      </div>
+    </section>
+
+    <section class="clock" aria-label="Huidige tijd">
+      <div class="time" aria-hidden="true"><span id="hh">00</span><span class="colon">:</span><span id="mm">00</span></div>
+      <span class="sr" id="timeSr"></span>
+    </section>
+
+    <section class="weather" aria-label="Weer in Kampen" id="weather">
+      <div class="now" id="now"><p class="wnote">Weer laden…</p></div>
+      <div class="hours" id="hours" hidden></div>
+      <div class="days" id="days" hidden></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  // ---------- Instellingen ----------
+  const params  = new URLSearchParams(location.search);
+  const NAME    = (params.get("naam") || "").trim().slice(0, 40);   // naam komt via de link: ?naam=...
+  const PLACE   = params.get("plaats") || "Kampen";
+  const LAT     = parseFloat(params.get("lat") || "52.555");
+  const LON     = parseFloat(params.get("lon") || "5.911");
+  const TZ      = "Europe/Amsterdam";
+  const DEMO    = params.has("demo");
+  const FORCE_T = params.get("t");            // bv. ?t=07:30 om een tijdstip te bekijken
+  const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const $ = id => document.getElementById(id);
+  $("name").textContent = NAME;
+  document.querySelector(".weather").setAttribute("aria-label", "Weer in " + PLACE);
+
+  // ---------- Tijd ----------
+  function now() {
+    const d = new Date();
+    if (FORCE_T && /^\d{1,2}:\d{2}$/.test(FORCE_T)) {
+      const [h, m] = FORCE_T.split(":").map(Number);
+      const p = zoned(d);
+      return new Date(d.getTime() + ((h - p.h) * 60 + (m - p.m)) * 60000);
+    }
+    return d;
+  }
+  function zoned(d) {
+    const f = new Intl.DateTimeFormat("nl-NL", {timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"});
+    const p = Object.fromEntries(f.formatToParts(d).map(x => [x.type, x.value]));
+    return {h: +p.hour, m: +p.minute, s: +p.second};
+  }
+  const pad = n => String(n).padStart(2, "0");
+  const fmtHM = d => new Intl.DateTimeFormat("nl-NL", {timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23"}).format(d);
+  const fmtDate = d => {
+    const s = new Intl.DateTimeFormat("nl-NL", {timeZone: TZ, weekday: "long", day: "numeric", month: "long"}).format(d);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  const greeting = h => h < 6 ? "Goedenacht," : h < 12 ? "Goedemorgen," : h < 18 ? "Goedemiddag," : "Goedenavond,";
+
+  function tick() {
+    const d = now(), t = zoned(d);
+    $("hh").textContent = pad(t.h);
+    $("mm").textContent = pad(t.m);
+    $("timeSr").textContent = "Het is " + pad(t.h) + ":" + pad(t.m);
+    $("greet").textContent = NAME ? greeting(t.h) : greeting(t.h).replace(",", "");
+    $("date").textContent = fmtDate(d);
+    if (t.s === 0 || !tick.sky) { paintSky(d); tick.sky = true; }
+  }
+
+  // ---------- Lucht ----------
+  let sun = null;            // {rise: Date, set: Date, nextRise: Date}
+  let wx = null;             // laatste weerdata
+  const C = {
+    night: ["#0a1433", "#1f2d5c"],
+    dawn:  ["#3b3f7a", "#e9967a"],
+    day:   ["#2a68bf", "#78b2ec"],
+    dusk:  ["#46306f", "#e0704f"],
+    grey:  ["#4a5363", "#7d8696"]
+  };
+  const hex = h => [1,3,5].map(i => parseInt(h.slice(i, i+2), 16));
+  const mix = (a, b, t) => { const A = hex(a), B = hex(b); return "#" + A.map((v,i) => Math.round(v + (B[i]-v)*t).toString(16).padStart(2,"0")).join(""); };
+  const clamp = (v, a=0, b=1) => Math.max(a, Math.min(b, v));
+
+  function defaultSun(d) {
+    const base = new Date(d); base.setHours(0,0,0,0);
+    return {rise: new Date(base.getTime() + 7.8*3600e3), set: new Date(base.getTime() + 18.7*3600e3)};
+  }
+
+  function phase(d) {
+    const s = sun || defaultSun(d);
+    const H = 3600e3, t = d.getTime(), r = s.rise.getTime(), st = s.set.getTime();
+    // levert top/bottom kleur, nacht-factor en gloed
+    let top, bottom, night = 0, glow = 0;
+    const seg = (x, a, b) => clamp((x - a) / (b - a));
+    if (t < r - H || t > st + H) { [top,bottom] = C.night; night = 1; }
+    else if (t < r) { const k = seg(t, r - H, r); top = mix(C.night[0], C.dawn[0], k); bottom = mix(C.night[1], C.dawn[1], k); night = 1 - k; glow = k; }
+    else if (t < r + H) { const k = seg(t, r, r + H); top = mix(C.dawn[0], C.day[0], k); bottom = mix(C.dawn[1], C.day[1], k); glow = 1 - k; }
+    else if (t < st - H) { [top,bottom] = C.day; }
+    else if (t < st) { const k = seg(t, st - H, st); top = mix(C.day[0], C.dusk[0], k); bottom = mix(C.day[1], C.dusk[1], k); glow = k; }
+    else { const k = seg(t, st, st + H); top = mix(C.dusk[0], C.night[0], k); bottom = mix(C.dusk[1], C.night[1], k); night = k; glow = 1 - k; }
+
+    // bewolking maakt de lucht grijzer (alleen overdag zichtbaar)
+    const grey = wx ? cloudiness(wx.current.weather_code) : 0;
+    const g = grey * (1 - night) * .55;
+    top = mix(top, C.grey[0], g); bottom = mix(bottom, C.grey[1], g);
+    return {top, bottom, night, glow: glow * (1 - grey * .6), rise: s.rise, set: s.set};
+  }
+
+  function paintSky(d) {
+    const p = phase(d), st = $("stage").style;
+    st.setProperty("--sky-top", p.top);
+    st.setProperty("--sky-bottom", p.bottom);
+    st.setProperty("--glow", `rgba(255,170,110,${(p.glow * .55).toFixed(3)})`);
+    fx.night = p.night;
+    drawArc(d, p);
+  }
+
+  // ---------- Zonneboog ----------
+  const track = $("arcTrack"), done = $("arcDone"), bodyG = $("arcBody");
+  const LEN = track.getTotalLength();
+  function drawArc(d, p) {
+    $("rise").textContent = "Zon op " + fmtHM(p.rise);
+    $("set").textContent  = "Onder " + fmtHM(p.set);
+    const t = d.getTime(), r = p.rise.getTime(), s = p.set.getTime();
+    let k, isDay = t >= r && t <= s;
+    if (isDay) k = (t - r) / (s - r);
+    else {
+      // nacht: van zonsondergang tot volgende zonsopkomst
+      const prevSet = t < r ? s - 864e5 : s, nextRise = t < r ? r : r + 864e5;
+      k = (t - prevSet) / (nextRise - prevSet);
+    }
+    k = clamp(k);
+    done.style.strokeDasharray = `${LEN * k} ${LEN}`;
+    const pt = track.getPointAtLength(LEN * k);
+    bodyG.innerHTML = isDay
+      ? `<circle cx="${pt.x}" cy="${pt.y}" r="7" fill="var(--sun)"/>`
+      : `<circle cx="${pt.x}" cy="${pt.y}" r="7" fill="#e8ecff"/><circle cx="${pt.x + 3.5}" cy="${pt.y - 2.5}" r="6" fill="var(--sky-top)"/>`;
+    $("stage").style.setProperty("--sun-x", (pt.x / 300 * 100).toFixed(1) + "%");
+  }
+
+  // ---------- Weer ----------
+  const DESC = {
+    0:["Onbewolkt","Heldere hemel"],1:["Overwegend zonnig","Overwegend helder"],2:["Half bewolkt"],3:["Bewolkt"],
+    45:["Mist"],48:["Mist met rijp"],51:["Lichte motregen"],53:["Motregen"],55:["Dichte motregen"],56:["Lichte ijzel"],57:["IJzel"],
+    61:["Lichte regen"],63:["Regen"],65:["Zware regen"],66:["Lichte ijzel"],67:["IJzel"],
+    71:["Lichte sneeuw"],73:["Sneeuw"],75:["Zware sneeuw"],77:["Sneeuwkorrels"],
+    80:["Lichte buien"],81:["Buien"],82:["Zware buien"],85:["Sneeuwbuien"],86:["Zware sneeuwbuien"],
+    95:["Onweer"],96:["Onweer met hagel"],99:["Zwaar onweer met hagel"]
+  };
+  const describe = (c, day) => { const x = DESC[c] || ["Onbekend"]; return (!day && x[1]) || x[0]; };
+  const kind = c => c === 0 || c === 1 ? "clear" : c === 2 ? "partly" : c === 3 ? "cloud" : c === 45 || c === 48 ? "fog"
+    : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "snow" : c >= 95 ? "storm" : c >= 51 ? "rain" : "cloud";
+  const cloudiness = c => ({clear:0, partly:.35, cloud:.9, fog:1, rain:.85, snow:.8, storm:1})[kind(c)];
+  const precipKind = c => { const k = kind(c); return k === "rain" || k === "storm" ? "rain" : k === "snow" ? "snow" : null; };
+  const rainIntensity = c => [55,63,65,67,81,82,95,96,99].includes(c) ? 1 : .55;
+
+  const SVG = {
+    sun:   `<g class="s" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="16" cy="16" r="5.5" fill="currentColor"/><path d="M16 4v3M16 25v3M4 16h3M25 16h3M7.5 7.5l2.1 2.1M22.4 22.4l2.1 2.1M7.5 24.5l2.1-2.1M22.4 9.6l2.1-2.1"/></g>`,
+    moon:  `<path d="M21.5 20.5A9 9 0 0 1 12 6.6a9 9 0 1 0 12.4 11.6 8.9 8.9 0 0 1-2.9 2.3z" fill="#e8ecff"/>`,
+    cloud: (x=0,y=0,o=1) => `<path transform="translate(${x} ${y})" opacity="${o}" d="M9.5 25h13a5.5 5.5 0 0 0 .6-11A7.5 7.5 0 0 0 8.8 15.6 4.8 4.8 0 0 0 9.5 25z" fill="currentColor"/>`,
+    drops: `<g class="r" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 27l-1.5 3M16.5 27L15 30M22 27l-1.5 3"/></g>`,
+    flakes:`<g fill="currentColor"><circle cx="10.5" cy="28.5" r="1.3"/><circle cx="16" cy="30" r="1.3"/><circle cx="21.5" cy="28.5" r="1.3"/></g>`,
+    bolt:  `<path class="s" d="M17 24l-3 5h3l-1.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    fog:   `<g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".9"><path d="M6 12h20M4 17h24M7 22h18"/></g>`
+  };
+  function icon(c, day = true) {
+    const k = kind(c), sky = day ? SVG.sun : SVG.moon;
+    let inner;
+    switch (k) {
+      case "clear":  inner = sky; break;
+      case "partly": inner = `<g transform="translate(-4 -4) scale(.85)">${sky}</g>` + SVG.cloud(2, 2); break;
+      case "cloud":  inner = SVG.cloud(-4, -4, .55) + SVG.cloud(1, 1); break;
+      case "fog":    inner = SVG.fog; break;
+      case "rain":   inner = SVG.cloud(0, -3) + SVG.drops; break;
+      case "snow":   inner = SVG.cloud(0, -3) + SVG.flakes; break;
+      case "storm":  inner = SVG.cloud(0, -4) + SVG.bolt; break;
+    }
+    return `<svg class="wicon" viewBox="0 0 32 32" aria-hidden="true">${inner}</svg>`;
+  }
+  const compass = deg => ["N","NO","O","ZO","Z","ZW","W","NW"][Math.round(deg / 45) % 8];
+  const beaufort = kmh => [1,6,12,20,29,39,50,62,75,89,103,118].findIndex(x => kmh < x) === -1 ? 12 : [1,6,12,20,29,39,50,62,75,89,103,118].findIndex(x => kmh < x);
+
+  function renderWeather() {
+    const c = wx.current, d = now();
+    const isDay = !!c.is_day;
+    $("now").innerHTML = `
+      ${icon(c.weather_code, isDay)}
+      <div>
+        <div class="temp">${Math.round(c.temperature_2m)}<sup>°C</sup></div>
+      </div>
+      <div>
+        <p class="desc">${describe(c.weather_code, isDay)} in ${escapeHtml(PLACE)}</p>
+        <p class="meta">Voelt als ${Math.round(c.apparent_temperature)}°, wind ${compass(c.wind_direction_10m)} ${beaufort(c.wind_speed_10m)} Bft</p>
+      </div>`;
+
+    // komende uren
+    const H = wx.hourly, start = H.time.findIndex(t => new Date(t + ":00") > new Date(d.getTime() - 3600e3 + 1));
+    const hours = [];
+    for (let i = Math.max(start, 0) + 1; i < H.time.length && hours.length < 6; i++) {
+      const t = new Date(H.time[i]);
+      const hr = +H.time[i].slice(11, 13);
+      const dayish = sun ? (hr >= sun.rise.getHours() && hr < sun.set.getHours()) : (hr >= 8 && hr < 19);
+      const pp = H.precipitation_probability[i];
+      hours.push(`<div class="hour">${pad(hr)}:00${icon(H.weather_code[i], dayish)}<b>${Math.round(H.temperature_2m[i])}°</b><span class="pp">${pp >= 20 ? pp + "%" : ""}</span></div>`);
+    }
+    $("hours").innerHTML = hours.join("");
+    $("hours").hidden = false;
+
+    // komende dagen
+    const D = wx.daily, wd = new Intl.DateTimeFormat("nl-NL", {weekday: "short"});
+    const days = [];
+    for (let i = 1; i < D.time.length && days.length < 3; i++) {
+      const name = wd.format(new Date(D.time[i] + "T12:00")).replace(".", "");
+      days.push(`<div class="day">${icon(D.weather_code[i])}<span><b>${name}</b> ${Math.round(D.temperature_2m_max[i])}° / ${Math.round(D.temperature_2m_min[i])}°</span></div>`);
+    }
+    $("days").innerHTML = days.join("");
+    $("days").hidden = false;
+
+    // effecten
+    fx.precip = precipKind(c.weather_code);
+    fx.intensity = rainIntensity(c.weather_code);
+    fx.clouds = cloudiness(c.weather_code);
+    fx.reset();
+  }
+  const escapeHtml = s => s.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+
+  async function loadWeather() {
+    try {
+      if (DEMO) { wx = demoData(); }
+      else {
+        const url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+          "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,is_day" +
+          "&hourly=temperature_2m,precipitation_probability,weather_code" +
+          "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset" +
+          "&timezone=" + encodeURIComponent(TZ) + "&forecast_days=4";
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(res.status);
+        wx = await res.json();
+      }
+      const D = wx.daily;
+      sun = {rise: new Date(D.sunrise[0]), set: new Date(D.sunset[0])};
+      renderWeather();
+      paintSky(now());
+      setTimeout(loadWeather, 15 * 60e3);
+    } catch (e) {
+      $("now").innerHTML = `<p class="wnote">Het weer is nu niet op te halen. Over 5 minuten probeert dit blok het opnieuw.</p>`;
+      setTimeout(loadWeather, 5 * 60e3);
+    }
+  }
+
+  function demoData() {
+    const d = new Date(), day = d.toISOString().slice(0, 10);
+    const code = +(params.get("demo") || 61) || 61;
+    const hourly = {time: [], temperature_2m: [], precipitation_probability: [], weather_code: []};
+    for (let i = 0; i < 48; i++) {
+      const t = new Date(d); t.setMinutes(0,0,0); t.setHours(t.getHours() + i - 2);
+      const iso = new Date(t.getTime() - t.getTimezoneOffset()*6e4).toISOString().slice(0, 16);
+      hourly.time.push(iso); hourly.temperature_2m.push(11 + Math.sin(i/4)*2);
+      hourly.precipitation_probability.push([10,35,60,75,40,15][i % 6]); hourly.weather_code.push([3,61,63,61,2,1][i % 6]);
+    }
+    const days = [0,1,2,3].map(i => new Date(d.getTime() + i*864e5).toISOString().slice(0,10));
+    return {
+      current: {temperature_2m: 11.4, apparent_temperature: 8.9, weather_code: code, wind_speed_10m: 22, wind_direction_10m: 230, is_day: zoned(now()).h >= 8 && zoned(now()).h < 19 ? 1 : 0},
+      hourly,
+      daily: {time: days, weather_code: [61,3,80,1], temperature_2m_max: [13,14,12,15], temperature_2m_min: [8,9,7,6],
+        sunrise: days.map(x => x + "T07:58"), sunset: days.map(x => x + "T18:44")}
+    };
+  }
+
+  // ---------- Effecten: sterren, wolken, regen, sneeuw ----------
+  const canvas = $("fx"), ctx = canvas.getContext("2d");
+  const fx = {night: 1, precip: null, intensity: .6, clouds: 0, stars: [], drops: [], puffs: [],
+    reset() { this.drops = []; this.puffs = []; seed(); }};
+  let W = 0, Hh = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth; Hh = canvas.clientHeight;
+    canvas.width = W * DPR; canvas.height = Hh * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    seed();
+  }
+  function seed() {
+    fx.stars = Array.from({length: Math.round(W * Hh / 2600)}, () => ({x: Math.random()*W, y: Math.random()*Hh*.8, r: Math.random()*1.1 + .2, p: Math.random()*Math.PI*2, s: .4 + Math.random()*1.2}));
+    const nPuffs = Math.round(fx.clouds * 7);
+    fx.puffs = Array.from({length: nPuffs}, (_, i) => ({x: Math.random()*W, y: Hh*(.05 + Math.random()*.45), w: 160 + Math.random()*260, v: 4 + Math.random()*8}));
+    const nDrops = fx.precip ? Math.round(W * Hh / (fx.precip === "rain" ? 900 : 1600) * fx.intensity) : 0;
+    fx.drops = Array.from({length: nDrops}, () => newDrop(true));
+  }
+  function newDrop(anywhere) {
+    return {x: Math.random()*(W + 60) - 30, y: anywhere ? Math.random()*Hh : -20, v: fx.precip === "rain" ? 520 + Math.random()*280 : 30 + Math.random()*40, l: 10 + Math.random()*10, w: Math.random()*Math.PI*2};
+  }
+  let last = performance.now();
+  function frame(ts) {
+    const dt = Math.min((ts - last) / 1000, .05); last = ts;
+    ctx.clearRect(0, 0, W, Hh);
+    const time = ts / 1000;
+
+    // sterren (alleen bij donker en weinig bewolking)
+    const starA = fx.night * (1 - fx.clouds * .85);
+    if (starA > .02) for (const s of fx.stars) {
+      const tw = REDUCED ? .8 : .55 + .45 * Math.sin(time * s.s + s.p);
+      ctx.globalAlpha = starA * tw; ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    }
+    // wolken
+    for (const c of fx.puffs) {
+      if (!REDUCED) { c.x += c.v * dt; if (c.x - c.w > W) c.x = -c.w; }
+      const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.w * .6);
+      const a = .10 + fx.clouds * .10 - fx.night * .05;
+      g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.globalAlpha = 1; ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(c.x, c.y, c.w * .6, c.w * .22, 0, 0, Math.PI*2); ctx.fill();
+    }
+    // neerslag
+    if (fx.precip === "rain") {
+      ctx.strokeStyle = "rgba(190,225,255,.55)"; ctx.lineWidth = 1.1; ctx.lineCap = "round"; ctx.globalAlpha = 1;
+      ctx.beginPath();
+      for (const d of fx.drops) {
+        if (!REDUCED) { d.y += d.v * dt; d.x -= d.v * dt * .12; }
+        if (d.y > Hh + 20) Object.assign(d, newDrop(false));
+        ctx.moveTo(d.x, d.y); ctx.lineTo(d.x + d.l * .12, d.y - d.l);
+      }
+      ctx.stroke();
+    } else if (fx.precip === "snow") {
+      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.globalAlpha = 1;
+      for (const d of fx.drops) {
+        if (!REDUCED) { d.y += d.v * dt; d.w += dt; d.x += Math.sin(d.w) * .4; }
+        if (d.y > Hh + 10) Object.assign(d, newDrop(false));
+        ctx.beginPath(); ctx.arc(d.x, d.y, 1.8, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    if (!REDUCED) requestAnimationFrame(frame);
+  }
+
+  // ---------- Start ----------
+  window.addEventListener("resize", resize);
+  resize();
+  tick();
+  setInterval(tick, 1000);
+  loadWeather();
+  if (REDUCED) { setInterval(() => frame(performance.now()), 60e3); }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
