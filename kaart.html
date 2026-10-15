@@ -10,7 +10,7 @@
   :root{
     --ink:#ffffff;
     --ink-soft:rgba(255,255,255,.8);
-    --pulse:#ffd27a;
+    --pulse:#16C9E0;
     --radius:22px;
     --font:Arial, Helvetica, sans-serif;
   }
@@ -18,12 +18,12 @@
   html,body{height:100%;background:transparent}
   body{font-family:var(--font);color:var(--ink);overflow:hidden}
 
-  .stage{position:relative;height:100%;min-height:300px;border-radius:var(--radius);overflow:hidden;background:#0a1433}
+  .stage{position:relative;height:100%;min-height:300px;border-radius:var(--radius);overflow:hidden;background:#0E2A30}
   #map{position:absolute;inset:0}
 
   /* zachte rand zodat tekst leesbaar blijft op elke kaartkleur */
   .shade{position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(180deg,rgba(10,20,51,0) 70%,rgba(10,20,51,.35) 100%)}
+    background:linear-gradient(180deg,rgba(14,42,48,0) 70%,rgba(14,42,48,.35) 100%)}
 
   .label{position:absolute;left:18px;bottom:14px;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.4)}
   .label p{font-size:13px;color:var(--ink-soft)}
@@ -118,9 +118,9 @@
     const night = current === "night";
     try {
       map.setSky({
-        "sky-color":     night ? "#0a1433" : "#5b9be0",
-        "horizon-color": night ? "#2a3466" : "#cfe3f7",
-        "fog-color":     night ? "#141f45" : "#e6eef7",
+        "sky-color":     night ? "#0E2A30" : "#16C9E0",
+        "horizon-color": night ? "#123A42" : "#D6F6FB",
+        "fog-color":     night ? "#0E2A30" : "#EEF8FA",
         "sky-horizon-blend": .6, "horizon-fog-blend": .5, "fog-ground-blend": .4
       });
     } catch (e) {}
@@ -131,7 +131,7 @@
     // bestaande 3D-laag van de stijl gebruiken, anders zelf toevoegen
     const existing = style.layers.find(l => l.type === "fill-extrusion");
     if (existing) {
-      map.setPaintProperty(existing.id, "fill-extrusion-color", night ? "#2b3a6b" : "#e8e2d6");
+      map.setPaintProperty(existing.id, "fill-extrusion-color", night ? "#16414A" : "#E4ECEE");
       map.setPaintProperty(existing.id, "fill-extrusion-opacity", night ? .9 : .85);
       return;
     }
@@ -139,7 +139,7 @@
     map.addLayer({
       id: "gebouwen-3d", type: "fill-extrusion", source: srcId, "source-layer": "building", minzoom: 13,
       paint: {
-        "fill-extrusion-color": night ? "#2b3a6b" : "#e8e2d6",
+        "fill-extrusion-color": night ? "#16414A" : "#E4ECEE",
         "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14.5, ["coalesce", ["get", "render_height"], 6]],
         "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
         "fill-extrusion-opacity": night ? .9 : .85
