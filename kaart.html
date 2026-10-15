@@ -19,6 +19,9 @@
   body{font-family:var(--font);color:var(--ink);overflow:hidden}
 
   .stage{position:relative;height:100%;min-height:300px;border-radius:var(--radius);overflow:hidden;background:#0E2A30}
+  html.ultra .stage{border-radius:0;background:#0D1240}
+  html.ultra .stage::after{content:"";position:absolute;inset:0;background:#2F45FF;mix-blend-mode:color;opacity:.6;pointer-events:none}
+  html.ultra .shade,html.nolabel .label{display:none}
   #map{position:absolute;inset:0}
 
   /* zachte rand zodat tekst leesbaar blijft op elke kaartkleur */
@@ -63,6 +66,10 @@
   const SPIN    = 2;                    // graden per seconde: één rondje in 3 minuten
   const IDLE_MS = 8000;                 // na zoveel ms stilstand weer gaan draaien
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const P = new URLSearchParams(location.search);
+  const ULTRA = P.get("thema") === "ultra";
+  if (ULTRA) document.documentElement.classList.add("ultra");
+  if (P.get("label") === "0") document.documentElement.classList.add("nolabel");
   const STYLES  = {
     day:   "https://tiles.openfreemap.org/styles/liberty",
     night: "https://tiles.openfreemap.org/styles/dark"
@@ -89,7 +96,7 @@
     return 90 - Math.acos(Math.max(-1, Math.min(1, cosZ))) / rad;
   }
   const mode = () => sunElevation(new Date(), BASE[1], BASE[0]) > -4 ? "day" : "night";
-  let current = mode();
+  let current = ULTRA ? "night" : mode();
 
   // ---------- Kaart ----------
   const map = new maplibregl.Map({
@@ -118,9 +125,9 @@
     const night = current === "night";
     try {
       map.setSky({
-        "sky-color":     night ? "#0E2A30" : "#16C9E0",
-        "horizon-color": night ? "#123A42" : "#D6F6FB",
-        "fog-color":     night ? "#0E2A30" : "#EEF8FA",
+        "sky-color":     ULTRA ? "#1A268F" : night ? "#0E2A30" : "#16C9E0",
+        "horizon-color": ULTRA ? "#2234D6" : night ? "#123A42" : "#D6F6FB",
+        "fog-color":     ULTRA ? "#0D1240" : night ? "#0E2A30" : "#EEF8FA",
         "sky-horizon-blend": .6, "horizon-fog-blend": .5, "fog-ground-blend": .4
       });
     } catch (e) {}
@@ -131,7 +138,7 @@
     // bestaande 3D-laag van de stijl gebruiken, anders zelf toevoegen
     const existing = style.layers.find(l => l.type === "fill-extrusion");
     if (existing) {
-      map.setPaintProperty(existing.id, "fill-extrusion-color", night ? "#16414A" : "#E4ECEE");
+      map.setPaintProperty(existing.id, "fill-extrusion-color", ULTRA ? "#3A50FF" : night ? "#16414A" : "#E4ECEE");
       map.setPaintProperty(existing.id, "fill-extrusion-opacity", night ? .9 : .85);
       return;
     }
@@ -139,7 +146,7 @@
     map.addLayer({
       id: "gebouwen-3d", type: "fill-extrusion", source: srcId, "source-layer": "building", minzoom: 13,
       paint: {
-        "fill-extrusion-color": night ? "#16414A" : "#E4ECEE",
+        "fill-extrusion-color": ULTRA ? "#3A50FF" : night ? "#16414A" : "#E4ECEE",
         "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14.5, ["coalesce", ["get", "render_height"], 6]],
         "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
         "fill-extrusion-opacity": night ? .9 : .85
@@ -153,7 +160,7 @@
   el.className = "base";
   el.innerHTML = "<i></i><b></b><b></b>";
   el.setAttribute("aria-hidden", "true");
-  new maplibregl.Marker({element: el}).setLngLat(BASE).addTo(map);
+  if (P.get("stip") !== "0") new maplibregl.Marker({element: el}).setLngLat(BASE).addTo(map);
 
   // ---------- Intro-vlucht en rondjes draaien ----------
   let spinning = false, lastInteract = 0, lastFrame = 0;
@@ -185,7 +192,7 @@
 
   // ---------- Elk kwartier: dag/nacht bijwerken ----------
   setInterval(() => {
-    const m = mode();
+    const m = ULTRA ? "night" : mode();
     if (m !== current) { current = m; map.setStyle(STYLES[m]); }
   }, 15 * 60e3);
 })();
